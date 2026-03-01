@@ -64,7 +64,7 @@ def main():
         url = build_meeting_options_url(user_id, TENANT_ID, meeting_id)
         urls.append(url)
 
-    driver = create_driver(CHROMEDRIVER_PATH)
+    driver = create_driver()
 
     try:
         login_microsoft(driver, email, password)
