@@ -23,20 +23,42 @@ if len(sys.argv) != 3:
 EMAIL = sys.argv[1]
 PASSWORD = sys.argv[2]
 
-BA_LIST = os.environ.get("BA_LIST")
+# BA_LIST = os.environ.get("BA_LIST")
 GRAPH_API_URL = os.environ.get("GRAPH_API_URL")
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 TENANT_ID = os.environ.get("TENANT_ID")
 CHROMEDRIVER_PATH = os.environ.get("CHROMEDRIVER_PATH")
 
-user_ID = None
-for ba in BA_LIST:
-    if ba["email"].lower() == EMAIL.lower():
-        user_ID = ba["mID"]
-        break  
+def get_user_id_by_email(email, access_token, get_value):
 
-print(f"User ID: {user_ID}")
+    url = f"https://graph.microsoft.com/v1.0/users?$filter=mail eq '{email}'"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        users = data.get("value", [])
+        if users:
+            return users[0].get(get_value)
+        else:
+            print("No user found with that email.")
+            return None
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
+        return None
+    
+# user_ID = None
+# for ba in BA_LIST:
+#     if ba["email"].lower() == EMAIL.lower():
+#         user_ID = ba["mID"]
+#         break  
+
+# print(f"User ID: {user_ID}")
 
 # Get Global Access Token for Graph API
 def get_global_graphAPI_token():
@@ -107,6 +129,7 @@ def get_outlook_metadata(access_token, user, start_date, end_date):
     return calendar_events
 
 access_token = get_global_graphAPI_token ()
+
 calendar_events = get_outlook_metadata(access_token, EMAIL, start_date, end_date)
 
 # Extract meeting ID from join URL
