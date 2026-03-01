@@ -3,8 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-
-def enable_auto_recording(driver, url: str):
+def enable_auto_recording(driver, url: str, auto_record: bool):
     print(f"Processing URL: {url}")
     driver.get(url)
 
@@ -15,7 +14,14 @@ def enable_auto_recording(driver, url: str):
     label = checkbox_input.find_element(By.XPATH, "./..")
     is_checked = checkbox_input.get_attribute("aria-checked")
 
-    if is_checked == "false":
+    # Convert string to boolean
+    currently_enabled = is_checked == "true"
+
+    print(f"Current state: {'ON' if currently_enabled else 'OFF'}")
+    print(f"Desired state: {'ON' if auto_record else 'OFF'}")
+
+    # Only change if needed
+    if currently_enabled != auto_record:
         label.click()
 
         save_button = WebDriverWait(driver, 10).until(
@@ -24,7 +30,9 @@ def enable_auto_recording(driver, url: str):
             )
         )
         save_button.click()
-        print("Auto recording enabled.")
+
+        print("Auto recording set to " + ("ON." if auto_record else "OFF."))
         time.sleep(2)
+
     else:
-        print("Already enabled.")
+        print("No change needed.")
