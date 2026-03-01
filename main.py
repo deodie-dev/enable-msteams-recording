@@ -11,15 +11,29 @@ from app.automation.login import login_microsoft
 from app.utils.meeting_utils import extract_meeting_id_from_join_url
 
 
-def is_restricted(event):
+# def is_restricted(event):
+#     subject = event.get("subject", "").lower()
+#     organizer = event.get("organizer", "").lower()
+
+#     for rule in RESTRICTED_USERS:
+#         if (rule["subject"].lower() in subject or rule["email"].lower() in organizer):
+#             return True
+#     return False
+def is_restricted(event: dict) -> bool:
     subject = event.get("subject", "").lower()
-    organizer = event.get("organizer", "").lower()
+    recipients = event.get("recipients", [])
 
     for rule in RESTRICTED_USERS:
-        if (rule["subject"].lower() in subject or rule["email"].lower() in organizer):
-            return True
-    return False
+        subject_match = rule["subject"].lower() in subject
+        recipient_match = any(
+            rule["email"].lower() == recipient
+            for recipient in recipients
+        )
 
+        if subject_match or recipient_match:
+            return True
+
+    return False
 
 def main():
     
@@ -39,25 +53,24 @@ def main():
     events = get_outlook_metadata(client, email, start_date, end_date)
 
     urls = []
+    urls_restricted = []
 
     for event in events:
-        if is_restricted(event):
-            print(f"Skipping restricted meeting: {event.get('subject')}")
-            continue
 
         categories = event.get("categories_str", "").lower()
-
         if not ("client - retainer" in categories or "client - diagnostic" in categories):
             continue
 
         meeting_id_raw = extract_meeting_id_from_join_url(event.get("joinURL"))
-
         if not meeting_id_raw:
             continue
 
         meeting_id = meeting_id_raw[3:]
         url = build_meeting_options_url(user_id, TENANT_ID, meeting_id)
-        urls.append(url)
+        if is_restricted(event):
+            urls_restricted.append(url)
+        else:
+            urls.append(url)
 
     driver = create_driver()
 
@@ -65,13 +78,14 @@ def main():
         login_microsoft(driver, email, password)
 
         for url in urls:
-            enable_auto_recording(driver, url)
+            enable_auto_recording(driver, url, True)
+
+        for url in urls_restricted:
+            enable_auto_recording(driver, url, False)
 
     finally:
         driver.quit()
         
-
-
 
 if __name__ == "__main__":
     main()
