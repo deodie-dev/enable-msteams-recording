@@ -1,5 +1,5 @@
 import sys
-from app.settings import (GRAPH_API_URL, NO_OF_DAYS, CLIENT_ID, CLIENT_SECRET, TENANT_ID, CHROMEDRIVER_PATH, RESTRICTED_USERS)
+from app.settings import (NO_OF_DAYS, TENANT_ID, RESTRICTED_USERS)
 from app.utils.date_utils import get_date_range
 from app.graph.auth import get_global_graph_token
 from app.graph.client import GraphClient
@@ -16,10 +16,7 @@ def is_restricted(event):
     organizer = event.get("organizer", "").lower()
 
     for rule in RESTRICTED_USERS:
-        if (
-            rule["subject"].lower() in subject
-            or rule["email"].lower() in organizer
-        ):
+        if (rule["subject"].lower() in subject or rule["email"].lower() in organizer):
             return True
     return False
 
@@ -53,9 +50,7 @@ def main():
         if not ("client - retainer" in categories or "client - diagnostic" in categories):
             continue
 
-        meeting_id_raw = extract_meeting_id_from_join_url(
-            event.get("joinURL")
-        )
+        meeting_id_raw = extract_meeting_id_from_join_url(event.get("joinURL"))
 
         if not meeting_id_raw:
             continue
