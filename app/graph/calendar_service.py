@@ -1,6 +1,15 @@
+
 def parse_event(event: dict) -> dict:
     start = event.get("start", {}).get("dateTime", "")
     end = event.get("end", {}).get("dateTime", "")
+
+    # Extract attendee emails
+    attendees = event.get("attendees", [])
+    recipient_emails = [
+        attendee.get("emailAddress", {}).get("address", "").lower()
+        for attendee in attendees
+        if attendee.get("emailAddress", {}).get("address")
+    ]
 
     return {
         "event_id": event.get("id"),
@@ -8,7 +17,8 @@ def parse_event(event: dict) -> dict:
         "subject": event.get("subject", "No Subject"),
         "organizer": event.get("organizer", {})
             .get("emailAddress", {})
-            .get("name", "Unknown Organizer"),
+            .get("address", ""),
+        "recipients": recipient_emails, 
         "start_time": start,
         "end_time": end,
         "categories_str": ", ".join(event.get("categories", [])) or "No Categories",
