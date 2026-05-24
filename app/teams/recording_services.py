@@ -7,31 +7,37 @@ def enable_auto_recording(driver, url: str, auto_record: bool):
     print(f"Processing URL: {url}")
     driver.get(url)
 
-    checkbox_input = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.ID, "AutoRecordingEnabled"))
+    dropdown = WebDriverWait(driver, 30).until(
+        EC.element_to_be_clickable((By.ID, "AutoRecordAndTranscribeMode"))
     )
 
-    label = checkbox_input.find_element(By.XPATH, "./..")
-    is_checked = checkbox_input.get_attribute("aria-checked")
+    current_value = dropdown.get_attribute("value")
 
-    # Convert string to boolean
-    currently_enabled = is_checked == "true"
+    print(f"Current value: {current_value}")
+    print("Desired value: Record and transcribe")
 
-    print(f"Current state: {'ON' if currently_enabled else 'OFF'}")
-    print(f"Desired state: {'ON' if auto_record else 'OFF'}")
+    if current_value != "Record and transcribe":
 
-    # Only change if needed
-    if currently_enabled != auto_record:
-        label.click()
+        dropdown.click()
+
+        option = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((
+                By.XPATH,
+                '//*[text()="Record and transcribe"]'
+            ))
+        )
+
+        option.click()
 
         save_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable(
                 (By.XPATH, '//button[@aria-label="Save"]')
             )
         )
+
         save_button.click()
 
-        print("Auto recording set to " + ("ON." if auto_record else "OFF."))
+        print("Auto recording set to 'Record and transcribe'.")
         time.sleep(2)
 
     else:
